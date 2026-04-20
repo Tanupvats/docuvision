@@ -7,7 +7,7 @@ on:
   push:
     branches: [main, master]
     tags:
-      - "v*.*.*"
+      - "v0.1.1"
   workflow_dispatch:
 
 permissions:
