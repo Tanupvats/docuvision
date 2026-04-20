@@ -1,0 +1,86 @@
+name: Publish
+
+# Build on every push to main and every tag. Publish to TestPyPI from main
+# (so you can verify a release pipeline is healthy) and to real PyPI only
+# on version tags like `v0.1.0`.
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Build — always runs
+  # -------------------------------------------------------------------------
+  build:
+    name: Build sdist + wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # OIDC publishing works with a clean checkout; persist-credentials
+          # is off for security.
+          persist-credentials: false
+          # Tags are needed if your version-derivation reads them; harmless otherwise.
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build tooling
+        run: python -m pip install --upgrade pip build twine
+
+      - name: Build distributions
+        run: python -m build
+
+      - name: Check distributions with twine
+        run: twine check --strict dist/*
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v5
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
+  # -------------------------------------------------------------------------
+  # Publish to PyPI — only on version tags like v0.1.0.
+  # Configure a Trusted Publisher on https://pypi.org with:
+  #   Owner:    Tanupvats
+  #   Repo:     docuvision
+  #   Workflow: publish.yml
+  #   Env:      pypi
+  # -------------------------------------------------------------------------
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/docuvision
+    permissions:
+      id-token: write    # REQUIRED for trusted publishing (OIDC)
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v6
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          print-hash: true
+
+            --title "${GITHUB_REF_NAME}" \
+            --notes "See [CHANGELOG.md](./CHANGELOG.md) for details." \
+            dist/*
