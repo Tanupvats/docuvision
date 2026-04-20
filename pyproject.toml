@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 # ---------------------------------------------------------------------------
 [project]
 name = "docuvision"
-version = "0.2.2"
+version = "2.0.0"
 description = "Adaptive, modular OCR and document-AI pipeline orchestrator"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.8"
