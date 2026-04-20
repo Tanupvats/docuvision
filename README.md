@@ -99,55 +99,6 @@ docuvision detectors                          # list registered detectors
 5. **Fails gracefully.** A per-stage failure is captured in
    `PipelineResult.metadata["failures"]` rather than aborting the pipeline.
 
-## Publishing this package to PyPI
-
-### 1. Verify the name is available
-
-Before anything else, **check that the package name is available on PyPI**:
-
-```bash
-# If this returns a page, the name is taken — pick a different one
-# and update `name = "…"` in pyproject.toml
-curl -s https://pypi.org/pypi/docuvision/json -o /dev/null -w "%{http_code}\n"
-```
-
-A `404` means the name is free. A `200` means someone has already published
-under that name — edit `[project].name` in `pyproject.toml` before building.
-
-### 2. Update placeholders
-
-- Edit `[project].authors` and `maintainers` with your name and email.
-- Edit `[project.urls]` to point at your real repository.
-- Bump `[project].version` to the release number (we follow [SemVer](https://semver.org/)).
-- Keep `CHANGELOG.md` in sync.
-
-### 3. Build the distributions
-
-```bash
-pip install --upgrade build twine
-python -m build            # produces dist/docuvision-<ver>.tar.gz and -py3-none-any.whl
-twine check dist/*         # validates README rendering and metadata
-```
-
-### 4. Upload
-
-```bash
-# Test-run against TestPyPI first
-twine upload --repository testpypi dist/*
-
-# If that looks good, push to PyPI proper
-twine upload dist/*
-```
-
-Configure `~/.pypirc` or use an API token (`twine upload -u __token__ -p <token>`).
-
-### 5. Tag the release
-
-```bash
-git tag -a v0.1.0 -m "Initial release"
-git push origin v0.1.0
-```
-
 ## Testing
 
 The full test suite runs against the core install only — heavy engines are not
