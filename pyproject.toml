@@ -1,0 +1,213 @@
+# ---------------------------------------------------------------------------
+# Build system
+# ---------------------------------------------------------------------------
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# ---------------------------------------------------------------------------
+# Project metadata (PEP 621)
+# ---------------------------------------------------------------------------
+[project]
+name = "docuvision"
+version = "0.1.0"
+description = "Adaptive, modular OCR and document-AI pipeline orchestrator"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Tanup Vats" },
+]
+maintainers = [
+    { name = "Tanup Vats" },
+]
+keywords = [
+    "ocr",
+    "document-ai",
+    "computer-vision",
+    "tesseract",
+    "paddleocr",
+    "easyocr",
+    "doctr",
+    "trocr",
+    "donut",
+    "craft",
+    "dbnet",
+    "east",
+    "text-detection",
+    "document-classification",
+    "pii-masking",
+    "embossed-text",
+    "chassis-number",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing",
+    "Typing :: Typed",
+]
+
+# Core dependencies — intentionally minimal. Everything heavier is an extra.
+dependencies = [
+    "numpy>=1.21",
+    "opencv-python-headless>=4.6",
+    "Pillow>=9.0",
+    "psutil>=5.9",
+    "scikit-learn>=1.0",
+]
+
+# ---------------------------------------------------------------------------
+# Optional dependencies (install via `pip install docuvision[<extra>]`)
+# ---------------------------------------------------------------------------
+[project.optional-dependencies]
+# Single-engine shortcuts
+tesseract = ["pytesseract>=0.3.10"]
+easyocr = ["easyocr>=1.7.0"]
+paddle-cpu = ["paddleocr>=2.7.0", "paddlepaddle>=2.5.0"]
+paddle-gpu = ["paddleocr>=2.7.0", "paddlepaddle-gpu>=2.5.0"]
+doctr = ["python-doctr[torch]>=0.7.0"]
+trocr = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "transformers>=4.35",
+    "sentencepiece>=0.1.99",
+    "timm>=0.9",
+]
+donut = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "transformers>=4.35",
+    "sentencepiece>=0.1.99",
+    "timm>=0.9",
+]
+
+# Detectors / classifiers
+yolo = ["ultralytics>=8.0"]
+onnx-cpu = ["onnxruntime>=1.16"]
+onnx-gpu = ["onnxruntime-gpu>=1.16"]
+hdbscan = ["hdbscan>=0.8.33"]
+
+# Aggregate extras for common deployments
+cpu = [
+    "pytesseract>=0.3.10",
+    "easyocr>=1.7.0",
+    "paddleocr>=2.7.0",
+    "paddlepaddle>=2.5.0",
+    "python-doctr[torch]>=0.7.0",
+    "onnxruntime>=1.16",
+    "hdbscan>=0.8.33",
+]
+gpu = [
+    "pytesseract>=0.3.10",
+    "easyocr>=1.7.0",
+    "paddleocr>=2.7.0",
+    "paddlepaddle-gpu>=2.5.0",
+    "python-doctr[torch]>=0.7.0",
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "transformers>=4.35",
+    "sentencepiece>=0.1.99",
+    "timm>=0.9",
+    "ultralytics>=8.0",
+    "onnxruntime-gpu>=1.16",
+    "hdbscan>=0.8.33",
+]
+all = [
+    "pytesseract>=0.3.10",
+    "easyocr>=1.7.0",
+    "paddleocr>=2.7.0",
+    "python-doctr[torch]>=0.7.0",
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "transformers>=4.35",
+    "sentencepiece>=0.1.99",
+    "timm>=0.9",
+    "ultralytics>=8.0",
+    "onnxruntime>=1.16",
+    "hdbscan>=0.8.33",
+]
+
+# Development / CI
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "build>=1.0",
+    "twine>=4.0",
+    "black>=23.0",
+    "ruff>=0.1",
+    "mypy>=1.5",
+]
+
+# ---------------------------------------------------------------------------
+# URLs shown on the PyPI project page
+# ---------------------------------------------------------------------------
+[project.urls]
+Homepage       = "https://github.com/Tanupvats/docuvision"
+Documentation  = "https://github.com/Tanupvats/docuvision#readme"
+Repository     = "https://github.com/Tanupvats/docuvision"
+Issues         = "https://github.com/Tanupvats/docuvision/issues"
+Changelog      = "https://github.com/Tanupvats/docuvision/blob/main/CHANGELOG.md"
+
+# ---------------------------------------------------------------------------
+# Console scripts
+# ---------------------------------------------------------------------------
+[project.scripts]
+docuvision = "docuvision.cli:main"
+
+# ---------------------------------------------------------------------------
+# setuptools configuration
+# ---------------------------------------------------------------------------
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["docuvision*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+docuvision = ["py.typed"]
+
+# ---------------------------------------------------------------------------
+# Tool configs
+# ---------------------------------------------------------------------------
+[tool.black]
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+extend-exclude = ["build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]  # line length — handled by black
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

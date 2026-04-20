@@ -1,0 +1,171 @@
+Metadata-Version: 2.1
+Name: docuvision
+Version: 0.1.0
+Summary: Adaptive, modular OCR and document-AI pipeline orchestrator
+Author: Tanup vats
+Maintainer: Tanup Vats
+License: Apache-2.0
+Project-URL: Homepage, https://github.com/Tanupvats/docuvision
+Project-URL: Documentation, https://github.com/Tanupvats/docuvision#readme
+Project-URL: Repository, https://github.com/Tanupvats/docuvision
+Project-URL: Issues, https://github.com/Tanupvats/docuvision/issues
+Project-URL: Changelog, https://github.com/Tanupvats/docuvision/blob/main/CHANGELOG.md
+Keywords: ocr,document-ai,computer-vision,tesseract,paddleocr,easyocr,doctr,trocr,donut,craft,dbnet,east,text-detection,document-classification,pii-masking,embossed-text,chassis-number
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Scientific/Engineering :: Image Recognition
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Text Processing
+Classifier: Typing :: Typed
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Provides-Extra: all
+Provides-Extra: cpu
+Provides-Extra: dev
+Provides-Extra: doctr
+Provides-Extra: donut
+Provides-Extra: easyocr
+Provides-Extra: gpu
+Provides-Extra: hdbscan
+Provides-Extra: onnx-cpu
+Provides-Extra: onnx-gpu
+Provides-Extra: paddle-cpu
+Provides-Extra: paddle-gpu
+Provides-Extra: tesseract
+Provides-Extra: trocr
+Provides-Extra: yolo
+License-File: LICENSE
+
+# DocuVision
+
+[![PyPI - Version](https://img.shields.io/pypi/v/docuvision.svg)](https://pypi.org/project/docuvision/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/docuvision.svg)](https://pypi.org/project/docuvision/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+
+**Adaptive, modular document OCR & AI pipeline orchestrator.** DocuVision detects
+your system's capabilities (CPU, GPU, VRAM, installed ML libraries) and
+dynamically picks the best feasible OCR and document-AI stack — from Tesseract
+on a 4 GB CPU box all the way up to TrOCR / Donut on a multi-GPU workstation.
+
+## Features
+
+- **System profiler** — OS, CPU, GPU, CUDA, VRAM, RAM, TensorRT, installed libs
+- **Tiered engine selection** — Tier 0 (CPU / Tesseract) → Tier 4 (GPU / TrOCR, Donut)
+- **Unified OCR registry** — Tesseract, EasyOCR, PaddleOCR (CPU/GPU), docTR, TrOCR, Donut
+- **Text detection** — CRAFT, DBNet, EAST, PaddleOCR-det + pure-OpenCV contour fallback
+- **Clustering** — DBSCAN / HDBSCAN bounding-box merging with anisotropic distance
+- **Document classification** — pluggable YOLO / ONNX / keyword backends, custom labels
+- **PII masking** — YOLO or regex backends, gaussian blur / black box / pixelation
+- **Embossed / engraved OCR** — CLAHE + Sobel + shape-from-shading + morphology, ideal
+  for chassis numbers, industrial plates, metal serials
+- **Graceful fallbacks** — no hard deps on heavy libs, missing engines are skipped
+
+## Installation
+
+```bash
+# Core only — works with the pure-OpenCV detector but needs an OCR engine
+# installed separately
+pip install docuvision
+
+# Common bundles
+pip install "docuvision[tesseract]"   # + pytesseract (requires tesseract binary)
+pip install "docuvision[easyocr]"     # + easyocr
+pip install "docuvision[paddle-cpu]"  # + paddleocr + paddlepaddle (CPU)
+pip install "docuvision[paddle-gpu]"  # + paddlepaddle-gpu
+pip install "docuvision[doctr]"       # + python-doctr
+pip install "docuvision[trocr]"       # + torch + transformers + TrOCR deps
+pip install "docuvision[donut]"       # + torch + transformers + Donut deps
+
+# Aggregate bundles
+pip install "docuvision[cpu]"         # every CPU-capable engine
+pip install "docuvision[gpu]"         # every engine, GPU-preferred
+pip install "docuvision[all]"         # everything, library versions only
+
+# Development
+pip install "docuvision[dev]"
+```
+
+Heavy engines (torch, paddle, transformers…) are **optional**. DocuVision lazily
+imports them, so a missing library simply disables that one engine; the rest of
+the pipeline keeps working.
+
+## Quick start
+
+```python
+from docuvision import DocumentPipeline, profile_system
+
+# See what DocuVision picks for your system
+print(profile_system().summary())
+
+# Zero-config pipeline — uses the best available engine
+pipe = DocumentPipeline()
+result = pipe.run("invoice.png")
+print(result.text)
+
+# Full-featured pipeline
+pipe = DocumentPipeline(
+    detect_text=True,
+    classify_doc=True,
+    mask=True,
+    embossed_mode=False,
+    language=["en"],
+)
+result = pipe.run("aadhaar.jpg")
+print(result.doc_class.label)  # → 'aadhaar'
+print(result.text)
+print(result.masks)            # detected PII regions
+# result.masked_image is a numpy.ndarray ready for cv2.imwrite(...)
+```
+
+## Command-line
+
+```bash
+docuvision profile                            # show the capability report
+docuvision ocr invoice.png                    # default pipeline
+docuvision ocr plate.jpg --embossed           # embossed / chassis OCR
+docuvision ocr id.jpg --classify --mask --mask-method blackbox
+docuvision engines                            # list registered OCR engines
+docuvision detectors                          # list registered detectors
+```
+
+## Design principles
+
+1. **No hard deps on heavy libs.** Every engine is imported lazily. `pip install
+   docuvision` drops in fine even without torch, paddle, or transformers.
+2. **Explicit tiering.** The profiler scores your hardware and picks a tier; you
+   can override it per call.
+3. **Composable, not monolithic.** Each stage (detect, classify, OCR, mask) is
+   an independent, swappable component with a common ABC and a registry.
+4. **Sane defaults, full control.** `DocumentPipeline().run(img)` just works;
+   every knob is exposed via `PipelineConfig`.
+5. **Fails gracefully.** A per-stage failure is captured in
+   `PipelineResult.metadata["failures"]` rather than aborting the pipeline.
+
+
+## Testing
+
+The full test suite runs against the core install only — heavy engines are not
+required:
+
+```bash
+pytest tests/
+# or, without pytest installed:
+python run_tests.py
+```
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE).
